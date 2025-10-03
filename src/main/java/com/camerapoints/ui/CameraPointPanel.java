@@ -14,10 +14,7 @@ import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 
@@ -244,6 +241,16 @@ class CameraPointPanel extends JPanel
             }
         });
 
+        JCheckBox enableToggle = new JCheckBox("",point.isEnabled());
+        enableToggle.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                point.setEnabled(enableToggle.isSelected());
+                plugin.updateConfig();
+            }
+        });
+
+        nameWrapper.add(enableToggle, BorderLayout.WEST);
         nameWrapper.add(nameInput, BorderLayout.CENTER);
         nameWrapper.add(nameActions, BorderLayout.EAST);
 

@@ -76,6 +76,7 @@ public class CameraPointsPlugin extends Plugin implements KeyListener
 
     @Getter
     private final List<CameraPoint> cameraPoints = new ArrayList<>();
+    private int cameraPointIndex;
 
     @Provides
     CameraPointsConfig getConfig(ConfigManager configManager)
@@ -123,7 +124,7 @@ public class CameraPointsPlugin extends Plugin implements KeyListener
 
     public void addCameraPoint()
     {
-        cameraPoints.add(new CameraPoint(Instant.now().toEpochMilli(), "Camera Point " + (cameraPoints.size() + 1), Direction.NONE, true, getZoom(), Keybind.NOT_SET));
+        cameraPoints.add(new CameraPoint(Instant.now().toEpochMilli(), "Camera Point " + (cameraPoints.size() + 1), Direction.NONE, true, getZoom(), Keybind.NOT_SET, true));
         updateConfig();
     }
 
@@ -168,6 +169,10 @@ public class CameraPointsPlugin extends Plugin implements KeyListener
 
     public void setCamera(CameraPoint point)
     {
+        if (point == null){
+            return;
+        }
+        System.out.println("Setting camera to " + point.getName());
         clientThread.invoke(() -> {
             if (point.isApplyZoom())
             {
@@ -178,6 +183,48 @@ public class CameraPointsPlugin extends Plugin implements KeyListener
                 client.runScript(TOPLEVEL_COMPASS_OP_SCRIPT_ID, point.getDirection().getValue());
             }
         });
+    }
+
+    public CameraPoint nextCameraPoint() {
+        if (cameraPoints.isEmpty()) {
+            return null;
+        }
+        int startingIndex = cameraPointIndex;
+        int searchIndex = cameraPointIndex;
+        do {
+            searchIndex++;
+            if (searchIndex >= cameraPoints.size()) {
+                searchIndex = 0;
+            }
+
+            CameraPoint cameraPoint = cameraPoints.get(searchIndex);
+            if (cameraPoint.isEnabled()) {
+                cameraPointIndex = searchIndex;
+                return cameraPoint;
+            }
+        } while (searchIndex != startingIndex);
+        return null;
+    }
+
+    public CameraPoint previousCameraPoint() {
+        if (cameraPoints.isEmpty()) {
+            return null;
+        }
+        int startingIndex = cameraPointIndex;
+        int searchIndex = cameraPointIndex;
+        do {
+            searchIndex--;
+            if (searchIndex < 0) {
+                searchIndex = cameraPoints.size() - 1;
+            }
+
+            CameraPoint cameraPoint = cameraPoints.get(searchIndex);
+            if (cameraPoint.isEnabled()) {
+                cameraPointIndex = searchIndex;
+                return cameraPoint;
+            }
+        } while (searchIndex != startingIndex);
+        return null;
     }
 
     private boolean chatboxFocused()
@@ -215,6 +262,13 @@ public class CameraPointsPlugin extends Plugin implements KeyListener
     {
         if ((!isTyping() && !isDialogOpen()) || !config.disableWhileTyping())
         {
+            if (config.nextCameraPointKey().matches(e)) {
+                setCamera(nextCameraPoint());
+            }
+            else if (config.previousCameraPointKey().matches(e)) {
+                setCamera(previousCameraPoint());
+            }
+
             for (CameraPoint point : cameraPoints) {
                 if (point.getKeybind().matches(e)) {
                     setCamera(point);

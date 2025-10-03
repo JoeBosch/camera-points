@@ -14,4 +14,5 @@ public class CameraPoint
     private boolean applyZoom;
     private int zoom;
     private Keybind keybind;
+    private boolean enabled;
 }
