@@ -1,5 +1,7 @@
 package com.camerapoints;
 
+import com.camerapoints.ui.CameraPointsPluginPanel;
+import com.camerapoints.utility.CameraPoint;
 import com.camerapoints.utility.Direction;
 import com.camerapoints.utility.Helper;
 import com.google.common.base.Strings;
@@ -11,10 +13,9 @@ import lombok.Getter;
 import lombok.Setter;
 import net.runelite.api.Client;
 import net.runelite.api.ScriptID;
-import net.runelite.api.VarClientInt;
-import net.runelite.api.VarClientStr;
+import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.gameval.VarClientID;
 import net.runelite.api.widgets.Widget;
-import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.Keybind;
@@ -24,22 +25,15 @@ import net.runelite.client.input.KeyListener;
 import net.runelite.client.input.KeyManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
-import com.camerapoints.ui.CameraPointsPluginPanel;
-import com.camerapoints.utility.CameraPoint;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
-import okio.Timeout;
 
 import javax.inject.Inject;
 import java.awt.event.KeyEvent;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @PluginDescriptor(
         name = "Camera Points",
@@ -129,7 +123,7 @@ public class CameraPointsPlugin extends Plugin implements KeyListener
 
     private int getZoom()
     {
-        return client.getVarcIntValue(VarClientInt.CAMERA_ZOOM_FIXED_VIEWPORT);
+        return client.getVarcIntValue(VarClientID.CAMERA_ZOOM_SMALL);
     }
 
     public void removeCameraPoint(CameraPoint point)
@@ -182,25 +176,36 @@ public class CameraPointsPlugin extends Plugin implements KeyListener
 
     private boolean chatboxFocused()
     {
-        Widget chatboxParent = client.getWidget(WidgetInfo.CHATBOX_PARENT);
+        Widget chatboxParent = client.getWidget(InterfaceID.Chatbox.UNIVERSE);
         if (chatboxParent == null || chatboxParent.getOnKeyListener() == null)
         {
             return false;
         }
 
-        Widget worldMapSearch = client.getWidget(WidgetInfo.WORLD_MAP_SEARCH);
-        return worldMapSearch == null || client.getVarcIntValue(VarClientInt.WORLD_MAP_SEARCH_FOCUSED) != 1;
+        Widget worldMapSearch = client.getWidget(InterfaceID.Worldmap.MAPLIST_DISPLAY);
+        if (worldMapSearch != null || client.getVarcIntValue(VarClientID.WORLDMAP_SEARCHING) == 1)
+        {
+            return false;
+        }
+
+        Widget report = client.getWidget(InterfaceID.Reportabuse.UNIVERSE);
+        if (report != null)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private boolean isDialogOpen()
     {
-        return isHidden(WidgetInfo.CHATBOX_MESSAGES) || isHidden(WidgetInfo.CHATBOX_TRANSPARENT_LINES) || !isHidden(WidgetInfo.BANK_PIN_CONTAINER);
+        return isHidden(InterfaceID.Chatbox.MES_LAYER_HIDE) || isHidden(InterfaceID.Chatbox.CHATDISPLAY) || !isHidden(InterfaceID.BankpinKeypad.UNIVERSE);
     }
 
-    private boolean isHidden(WidgetInfo widgetInfo)
+    private boolean isHidden(int component)
     {
-        Widget w = client.getWidget(widgetInfo);
-        return w == null || w.isSelfHidden();
+        Widget widget = client.getWidget(component);
+        return widget == null || widget.isSelfHidden();
     }
 
     @Getter(AccessLevel.PACKAGE)
@@ -212,8 +217,7 @@ public class CameraPointsPlugin extends Plugin implements KeyListener
 
     @Override
     public void keyPressed(KeyEvent e)
-    {
-        if ((!isTyping() && !isDialogOpen()) || !config.disableWhileTyping())
+    {if ((!isTyping() && !isDialogOpen()) || !config.disableWhileTyping())
         {
             for (CameraPoint point : cameraPoints) {
                 if (point.getKeybind().matches(e)) {
@@ -237,7 +241,7 @@ public class CameraPointsPlugin extends Plugin implements KeyListener
                     setTyping(false);
                     break;
                 case KeyEvent.VK_BACK_SPACE:
-                    if (Strings.isNullOrEmpty(client.getVarcStrValue(VarClientStr.CHATBOX_TYPED_TEXT)))
+                    if (Strings.isNullOrEmpty(client.getVarcStrValue(VarClientID.CHATINPUT)))
                     {
                         setTyping(false);
                     }
