@@ -32,6 +32,7 @@ public class CameraPointsPlugin extends Plugin
 {
 	public static final String CURRENT_VERISON = "3.0.0";
 	public static final int SCRIPTID_CAM_FORCE_ANGLE = 143;
+	public static final int SCRIPTID_COMPASS_ANGLE = 1050;
 
 	@Inject
 	private Gson gson;
@@ -127,17 +128,39 @@ public class CameraPointsPlugin extends Plugin
 	public void setCamera(CameraPoint cameraPoint)
 	{
 		clientThread.invoke(() -> {
-			client.setCameraPitchTarget(cameraPoint.getPitch());
-			client.setCameraYawTarget(cameraPoint.getYaw());
-			client.runScript(ScriptID.CAMERA_DO_ZOOM, cameraPoint.getZoom(), cameraPoint.getZoom());
+			CameraPoint.Direction direction = cameraPoint.getDirection() == null ? CameraPoint.Direction.NORTH : cameraPoint.getDirection();
+			client.runScript(SCRIPTID_COMPASS_ANGLE, direction.getScriptValue());
+			if (cameraPoint.isApplyZoom())
+			{
+				client.runScript(ScriptID.CAMERA_DO_ZOOM, cameraPoint.getZoom(), cameraPoint.getZoom());
+			}
 		});
 	}
 
 	public void saveCameraPosition(CameraPoint cameraPoint)
 	{
-		cameraPoint.setPitch(client.getCameraPitch());
-		cameraPoint.setYaw(client.getCameraYaw());
-		cameraPoint.setZoom(client.getVarcIntValue(VarClientID.CAMERA_ZOOM_BIG));
+		cameraPoint.setDirection(CameraPoint.Direction.fromCameraYaw(client.getCameraYaw()));
+		cameraPoint.setZoom(getCurrentZoom());
+		cameraPoint.setApplyZoom(true);
+	}
+
+	public int getCurrentZoom()
+	{
+		return client.getVarcIntValue(VarClientID.CAMERA_ZOOM_BIG);
+	}
+
+	public CameraPoint addPointToGroup(CameraPointGroup group)
+	{
+		CameraPoint point = cameraPointGroupManager.addPointToGroup(group);
+		point.setZoom(getCurrentZoom());
+		point.setApplyZoom(true);
+		return point;
+	}
+
+	public void updateCameraPointZoom(CameraPoint cameraPoint)
+	{
+		cameraPoint.setZoom(getCurrentZoom());
+		cameraPoint.setApplyZoom(true);
 	}
 
 	public void loadConfig()

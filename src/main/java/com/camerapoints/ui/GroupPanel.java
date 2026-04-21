@@ -167,7 +167,7 @@ public class GroupPanel extends JPanel
 				{
 					return;
 				}
-				plugin.getCameraPointGroupManager().addPointToGroup(group);
+				plugin.addPointToGroup(group);
 				plugin.updateConfig();
 				reload();
 				addPointLabel.setIcon(addHoverIcon);
