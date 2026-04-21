@@ -71,7 +71,7 @@ public class CameraPointGroupManager
 	public CameraPoint addPointToGroup(CameraPointGroup group)
 	{
 		int nextId = group.getPoints().stream().map(CameraPoint::getId).max(Integer::compareTo).map(i -> i + 1).orElse(0);
-		CameraPoint newPoint = new CameraPoint(nextId, "New Camera Point", -1, -1, -1, Keybind.NOT_SET, true);
+		CameraPoint newPoint = new CameraPoint(nextId, "New Camera Point", CameraPoint.Direction.NORTH, -1, false, Keybind.NOT_SET, true);
 		addPointToGroup(group, newPoint);
 		return newPoint;
 	}

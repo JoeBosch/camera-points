@@ -13,9 +13,11 @@ import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -24,6 +26,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -42,6 +45,8 @@ public class PointPanel extends JPanel
 	private final ImageIcon deleteIcon = new ImageIcon(ImageUtil.loadImageResource(CameraPointsPlugin.class, "delete_icon.png"));
 	private final ImageIcon deleteHoverIcon = new ImageIcon(ImageUtil.loadImageResource(CameraPointsPlugin.class, "delete_icon_red.png"));
 	private final ImageIcon deletePressedIcon = new ImageIcon(ImageUtil.alphaOffset(deleteHoverIcon.getImage(), -50));
+    private final ImageIcon zoomIcon = new ImageIcon(ImageUtil.loadImageResource(CameraPointsPlugin.class, "zoom_icon.png"));
+    private final ImageIcon zoomPressedIcon = new ImageIcon(ImageUtil.loadImageResource(CameraPointsPlugin.class, "zoom_icon_blue.png"));
 
 	private final JCheckBox enabledBox = new JCheckBox();
 	private final FlatTextField nameInput = new FlatTextField();
@@ -49,7 +54,9 @@ public class PointPanel extends JPanel
 	private final JLabel cancelLabel = new JLabel("Cancel");
 	private final JLabel renameLabel = new JLabel("Rename");
 	private final JButton keybindButton = new JButton();
-	private final JLabel fromGameLabel = new JLabel(fromGameIcon);
+	private final JComboBox<CameraPoint.Direction> directionDropdown = new JComboBox<>(CameraPoint.Direction.values());
+	private final JToggleButton applyZoomButton = new JToggleButton();
+	private final JLabel updateZoomLabel = new JLabel(fromGameIcon);
 	private final JLabel deleteLabel = new JLabel(deleteIcon);
 
 	public PointPanel(CameraPointsPlugin plugin, CameraPointGroup group, CameraPoint cameraPoint, Runnable reloadFunction)
@@ -116,11 +123,10 @@ public class PointPanel extends JPanel
 			plugin.updateConfig();
 		});
 
-		namePanel.add(enabledBox, BorderLayout.WEST);
 		namePanel.add(nameInput, BorderLayout.CENTER);
 		namePanel.add(nameActions, BorderLayout.EAST);
 
-		JPanel bottomPanel = new JPanel(new BorderLayout());
+		JPanel bottomPanel = new JPanel(new BorderLayout(0, 6));
 		bottomPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		bottomPanel.setBorder(new EmptyBorder(8, 8, 8, 8));
 
@@ -155,13 +161,45 @@ public class PointPanel extends JPanel
 			}
 		});
 
+		if (cameraPoint.getDirection() == null)
+		{
+			cameraPoint.setDirection(CameraPoint.Direction.NORTH);
+		}
+		directionDropdown.setSelectedItem(cameraPoint.getDirection());
+		directionDropdown.setToolTipText("Direction to face when loading this point");
+		directionDropdown.addActionListener(e -> {
+			CameraPoint.Direction selectedDirection = (CameraPoint.Direction) directionDropdown.getSelectedItem();
+			if (selectedDirection == null)
+			{
+				return;
+			}
+			cameraPoint.setDirection(selectedDirection);
+			plugin.updateConfig();
+		});
+
+		applyZoomButton.setSelected(cameraPoint.isApplyZoom());
+		applyZoomButton.setToolTipText("Apply saved zoom when loading this point");
+		applyZoomButton.setIcon(zoomIcon);
+		applyZoomButton.setSelectedIcon(zoomPressedIcon);
+		applyZoomButton.setPressedIcon(zoomPressedIcon);
+		applyZoomButton.setBorderPainted(false);
+		applyZoomButton.setContentAreaFilled(false);
+		applyZoomButton.setFocusPainted(false);
+		applyZoomButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		applyZoomButton.setPreferredSize(new Dimension(18, 18));
+		applyZoomButton.addItemListener(e -> {
+			cameraPoint.setApplyZoom(applyZoomButton.isSelected());
+			plugin.updateConfig();
+		});
+
 		JPanel buttonsPanel = new JPanel(new BorderLayout(4, 0));
 		buttonsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
-		fromGameLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		fromGameLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		fromGameLabel.setToolTipText("Get camera details from game");
-		fromGameLabel.addMouseListener(new MouseAdapter()
+		updateZoomLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		updateZoomLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		updateZoomLabel.setToolTipText("Update zoom from current game zoom");
+		updateZoomLabel.setPreferredSize(new Dimension(18, 18));
+		updateZoomLabel.addMouseListener(new MouseAdapter()
 		{
 			@Override
 			public void mousePressed(MouseEvent e)
@@ -170,7 +208,7 @@ public class PointPanel extends JPanel
 				{
 					return;
 				}
-				fromGameLabel.setIcon(fromGamePressedIcon);
+				updateZoomLabel.setIcon(fromGamePressedIcon);
 			}
 
 			@Override
@@ -181,33 +219,35 @@ public class PointPanel extends JPanel
 					return;
 				}
 				int result = JOptionPane.showConfirmDialog(PointPanel.this,
-					"Are you sure you want to load the camera details from the game?",
+					"Are you sure you want to update zoom from the game?",
 					"Are you sure?",
 					JOptionPane.OK_CANCEL_OPTION);
 				if (result == 0)
 				{
-					plugin.saveCameraPosition(cameraPoint);
+					plugin.updateCameraPointZoom(cameraPoint);
+					applyZoomButton.setSelected(cameraPoint.isApplyZoom());
 					plugin.updateConfig();
 				}
-				fromGameLabel.setIcon(fromGameHoverIcon);
+				updateZoomLabel.setIcon(fromGameHoverIcon);
 			}
 
 			@Override
 			public void mouseEntered(MouseEvent e)
 			{
-				fromGameLabel.setIcon(fromGameHoverIcon);
+				updateZoomLabel.setIcon(fromGameHoverIcon);
 			}
 
 			@Override
 			public void mouseExited(MouseEvent e)
 			{
-				fromGameLabel.setIcon(fromGameIcon);
+				updateZoomLabel.setIcon(fromGameIcon);
 			}
 		});
 
 		deleteLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		deleteLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		deleteLabel.setToolTipText("Delete camera point");
+		deleteLabel.setPreferredSize(new Dimension(18, 18));
 		deleteLabel.addMouseListener(new MouseAdapter()
 		{
 			@Override
@@ -253,11 +293,26 @@ public class PointPanel extends JPanel
 			}
 		});
 
-		buttonsPanel.add(fromGameLabel, BorderLayout.WEST);
+		buttonsPanel.add(updateZoomLabel, BorderLayout.WEST);
 		buttonsPanel.add(deleteLabel, BorderLayout.EAST);
 
-		bottomPanel.add(keybindButton, BorderLayout.WEST);
-		bottomPanel.add(buttonsPanel, BorderLayout.EAST);
+		directionDropdown.setPreferredSize(new Dimension(100, 22));
+		keybindButton.setPreferredSize(new Dimension(78, 22));
+
+		JPanel topMetaRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+		topMetaRow.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		topMetaRow.add(enabledBox);
+		topMetaRow.add(directionDropdown);
+
+		JPanel bottomControlsRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+		bottomControlsRow.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		bottomControlsRow.add(keybindButton);
+		bottomControlsRow.add(applyZoomButton);
+		bottomControlsRow.add(updateZoomLabel);
+		bottomControlsRow.add(deleteLabel);
+
+		bottomPanel.add(topMetaRow, BorderLayout.NORTH);
+		bottomPanel.add(bottomControlsRow, BorderLayout.SOUTH);
 
 		add(namePanel, BorderLayout.NORTH);
 		add(bottomPanel, BorderLayout.SOUTH);
