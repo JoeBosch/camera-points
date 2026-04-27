@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 public class CameraPointGroupManager
 {
 	private final List<CameraPointGroup> groups = new ArrayList<>();
-	private final Map<Integer, Integer> currentPointIds = new HashMap<>();
+	private final Map<Integer, Long> currentPointIds = new HashMap<>();
 
 	public void setGroups(List<CameraPointGroup> groups)
 	{
@@ -63,14 +63,14 @@ public class CameraPointGroupManager
 
 	public void addPointToGroup(CameraPointGroup group, CameraPoint point)
 	{
-		int nextId = group.getPoints().stream().map(CameraPoint::getId).max(Integer::compareTo).map(i -> i + 1).orElse(0);
+		long nextId = group.getPoints().stream().map(CameraPoint::getId).max(Long::compareTo).map(i -> i + 1).orElse(0L);
 		point.setId(nextId);
 		group.getPoints().add(point);
 	}
 
 	public CameraPoint addPointToGroup(CameraPointGroup group)
 	{
-		int nextId = group.getPoints().stream().map(CameraPoint::getId).max(Integer::compareTo).map(i -> i + 1).orElse(0);
+		long nextId = group.getPoints().stream().map(CameraPoint::getId).max(Long::compareTo).map(i -> i + 1).orElse(0L);
 		CameraPoint newPoint = new CameraPoint(nextId, "New Camera Point", CameraPoint.Direction.NORTH, -1, false, Keybind.NOT_SET, true);
 		addPointToGroup(group, newPoint);
 		return newPoint;
@@ -100,14 +100,14 @@ public class CameraPointGroupManager
 
 	public List<CameraPoint> getAllPointsForGroup(CameraPointGroup group)
 	{
-		return group.getPoints().stream().sorted(Comparator.comparingInt(CameraPoint::getId)).collect(Collectors.toList());
+		return group.getPoints().stream().sorted(Comparator.comparingLong(CameraPoint::getId)).collect(Collectors.toList());
 	}
 
 	public List<CameraPoint> getEnabledPointsForGroup(CameraPointGroup group)
 	{
 		return group.getPoints().stream()
 			.filter(CameraPoint::isEnabled)
-			.sorted(Comparator.comparingInt(CameraPoint::getId))
+			.sorted(Comparator.comparingLong(CameraPoint::getId))
 			.collect(Collectors.toList());
 	}
 
@@ -124,7 +124,7 @@ public class CameraPointGroupManager
 			return null;
 		}
 
-		Integer currentPointId = currentPointIds.get(group.getId());
+		Long currentPointId = currentPointIds.get(group.getId());
 		int currentIndex = -1;
 		for (int i = 0; i < enabledPoints.size(); i++)
 		{
@@ -148,7 +148,7 @@ public class CameraPointGroupManager
 			return null;
 		}
 
-		Integer currentPointId = currentPointIds.get(group.getId());
+		Long currentPointId = currentPointIds.get(group.getId());
 		int currentIndex = -1;
 		for (int i = 0; i < enabledPoints.size(); i++)
 		{

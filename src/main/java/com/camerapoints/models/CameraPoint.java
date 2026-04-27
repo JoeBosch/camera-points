@@ -52,7 +52,7 @@ public class CameraPoint
 		}
 	}
 
-	private int id;
+	private long id;
 	private String name;
 	private Direction direction;
 	private int zoom;
@@ -60,7 +60,7 @@ public class CameraPoint
 	private Keybind keybind;
 	private boolean enabled;
 
-	public CameraPoint(int id, String name, Direction direction, int zoom, boolean applyZoom, Keybind keybind, boolean enabled)
+	public CameraPoint(long id, String name, Direction direction, int zoom, boolean applyZoom, Keybind keybind, boolean enabled)
 	{
 		this.id = id;
 		this.name = name;
@@ -71,12 +71,12 @@ public class CameraPoint
 		this.enabled = enabled;
 	}
 
-	public int getId()
+	public long getId()
 	{
 		return id;
 	}
 
-	public void setId(int id)
+	public void setId(long id)
 	{
 		this.id = id;
 	}
