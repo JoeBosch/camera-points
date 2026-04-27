@@ -402,6 +402,10 @@ public class GroupPanel extends JPanel
 					requestFocusInWindow();
 					return;
 				}
+				if (Helper.isModifierKey(e.getKeyCode()))
+				{
+					return;
+				}
 				Keybind hotkey = new Keybind(e);
 				button.setText(hotkey.toString());
 				setter.set(hotkey);
