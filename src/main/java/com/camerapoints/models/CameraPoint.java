@@ -8,6 +8,7 @@ public class CameraPoint
 {
 	public enum Direction
 	{
+		NONE(0, "Unchanged"),
 		NORTH(1, "North"),
 		EAST(2, "East"),
 		SOUTH(3, "South"),
