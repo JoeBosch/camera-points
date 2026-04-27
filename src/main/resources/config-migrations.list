@@ -1,3 +1,0 @@
-# Ordered list of config migration classes.
-com.camerapoints.migrations.GroupMigrate
-com.camerapoints.migrations.GroupMigrateRecovery
