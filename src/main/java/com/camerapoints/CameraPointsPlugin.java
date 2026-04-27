@@ -11,6 +11,7 @@ import net.runelite.api.ScriptID;
 import net.runelite.api.gameval.VarClientID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.config.Keybind;
 import net.runelite.client.input.KeyManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -165,15 +166,43 @@ public class CameraPointsPlugin extends Plugin
 
 	public void loadConfig()
 	{
-		String version = configManager.getConfiguration(CameraPointsConfig.CONFIG_GROUP, "version");
-		if (!CURRENT_VERISON.equals(version))
-		{
-			return;
-		}
 		String groupsJson = configManager.getConfiguration(CameraPointsConfig.CONFIG_GROUP, "groups");
-		CameraPointGroup[] groups = gson.fromJson(groupsJson, CameraPointGroup[].class);
-		List<CameraPointGroup> groupList = groups == null ? java.util.Collections.emptyList() : Arrays.asList(groups);
-		cameraPointGroupManager.setGroups(groupList);
+		if (groupsJson != null && !groupsJson.isEmpty())
+		{
+			// Load groups from "groups" json
+			CameraPointGroup[] groups = gson.fromJson(groupsJson, CameraPointGroup[].class);
+			List<CameraPointGroup> groupList = groups == null ? java.util.Collections.emptyList() : Arrays.asList(groups);
+			cameraPointGroupManager.setGroups(groupList);
+		}
+
+		// Check if user has old points from v2 version of plugin
+		String oldPointsJson = configManager.getConfiguration(CameraPointsConfig.CONFIG_GROUP, "points");
+		if (oldPointsJson != null && !oldPointsJson.isEmpty())
+		{
+			CameraPoint[] oldPoints = gson.fromJson(oldPointsJson, CameraPoint[].class);
+			if (oldPoints != null && oldPoints.length > 0)
+			{
+				// Found old points from the v2 version
+				for (var oldPoint : oldPoints)
+				{
+					// Enable them all since "enabled" is new with v3
+					oldPoint.setEnabled(true);
+				}
+
+				// Add all points into a new group called "Old"
+
+				var recoveredGroup = new CameraPointGroup(-1, "Old", true, Keybind.NOT_SET, Keybind.NOT_SET, Arrays.asList(oldPoints));
+				cameraPointGroupManager.addGroup(recoveredGroup);
+
+				// Save the points to "oldPoints" as an extra backup, and unset
+				// "points" so this recovery step doesn't continue to be called.
+				configManager.setConfiguration(CameraPointsConfig.CONFIG_GROUP, "oldPoints", oldPointsJson);
+				configManager.unsetConfiguration(CameraPointsConfig.CONFIG_GROUP, "points");
+
+				// Save the updated groups under "groups"
+				this.updateConfig();
+			}
+		}
 	}
 
 	public void updateConfig()
