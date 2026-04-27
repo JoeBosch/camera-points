@@ -62,6 +62,9 @@ public class CameraPointsPlugin extends Plugin
 	@Inject
 	private KeyHandler keyHandler;
 
+	@Inject
+	private ConfigMigrationRunner configMigrationRunner;
+
 	private CameraPointsPluginPanel pluginPanel;
 	private NavigationButton navigationButton;
 
@@ -169,7 +172,7 @@ public class CameraPointsPlugin extends Plugin
 
 	public void loadConfig()
 	{
-		new ConfigMigrationRunner(configManager, CURRENT_VERSION).runMigrations();
+		configMigrationRunner.runMigrations(CURRENT_VERSION);
 
 		String groupsJson = configManager.getConfiguration(CameraPointsConfig.CONFIG_GROUP, "groups");
 		CameraPointGroup[] groups = gson.fromJson(groupsJson, CameraPointGroup[].class);

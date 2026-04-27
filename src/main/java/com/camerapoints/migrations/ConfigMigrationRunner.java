@@ -1,15 +1,11 @@
 package com.camerapoints.migrations;
 
 import com.camerapoints.CameraPointsConfig;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.config.ConfigManager;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -17,18 +13,17 @@ import java.util.Objects;
 @Slf4j
 public class ConfigMigrationRunner
 {
-	private static final String MIGRATION_LIST_RESOURCE = "config-migrations.list";
-
 	private final ConfigManager configManager;
-	private final String targetVersion;
+	private final Gson gson;
 
-	public ConfigMigrationRunner(ConfigManager configManager, String targetVersion)
+	@Inject
+	public ConfigMigrationRunner(ConfigManager configManager, Gson gson)
 	{
 		this.configManager = configManager;
-		this.targetVersion = targetVersion;
+		this.gson = gson;
 	}
 
-	public void runMigrations()
+	public void runMigrations(String targetVersion)
 	{
 		String configVersion = configManager.getConfiguration(CameraPointsConfig.CONFIG_GROUP, "version");
 		if (targetVersion.equals(configVersion))
@@ -79,7 +74,7 @@ public class ConfigMigrationRunner
 		log.info("Applying camera points config migration {} -> {}", migration.fromVersion(), migration.toVersion());
 		try
 		{
-			migration.apply(configManager);
+			migration.apply(configManager, gson);
 			return true;
 		}
 		catch (RuntimeException ex)
@@ -98,71 +93,9 @@ public class ConfigMigrationRunner
 
 	private List<ConfigMigration> loadMigrations()
 	{
-		List<String> classNames = readMigrationList();
-		if (classNames.isEmpty())
-		{
-			return Collections.emptyList();
-		}
-
-		List<ConfigMigration> migrations = new ArrayList<>();
-		for (String className : classNames)
-		{
-			ConfigMigration migration = instantiateMigration(className);
-			if (migration != null)
-			{
-				migrations.add(migration);
-			}
-		}
-		return migrations;
-	}
-
-	private List<String> readMigrationList()
-	{
-		InputStream stream = getClass().getClassLoader().getResourceAsStream(MIGRATION_LIST_RESOURCE);
-		if (stream == null)
-		{
-			log.debug("No migration list resource found: {}", MIGRATION_LIST_RESOURCE);
-			return Collections.emptyList();
-		}
-
-		List<String> classNames = new ArrayList<>();
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8)))
-		{
-			String line;
-			while ((line = reader.readLine()) != null)
-			{
-				String trimmed = line.trim();
-				if (trimmed.isEmpty() || trimmed.startsWith("#"))
-				{
-					continue;
-				}
-				classNames.add(trimmed);
-			}
-		}
-		catch (IOException e)
-		{
-			log.error("Failed to read migration list resource: {}", MIGRATION_LIST_RESOURCE, e);
-		}
-		return classNames;
-	}
-
-	private ConfigMigration instantiateMigration(String className)
-	{
-		try
-		{
-			Class<?> migrationClass = Class.forName(className);
-			Object migrationInstance = migrationClass.getDeclaredConstructor().newInstance();
-			if (!(migrationInstance instanceof ConfigMigration))
-			{
-				log.warn("Migration class {} does not implement ConfigMigration", className);
-				return null;
-			}
-			return (ConfigMigration) migrationInstance;
-		}
-		catch (ReflectiveOperationException e)
-		{
-			log.error("Could not load migration class {}", className, e);
-			return null;
-		}
+		return Collections.unmodifiableList(List.of(
+			new GroupMigrate(),
+			new GroupMigrateRecovery()
+		));
 	}
 }

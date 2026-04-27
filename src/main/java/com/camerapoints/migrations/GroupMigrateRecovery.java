@@ -18,8 +18,6 @@ import java.util.List;
 
 public class GroupMigrateRecovery implements ConfigMigration
 {
-	private final Gson gson = new Gson();
-
 	@Override
 	public String fromVersion()
 	{
@@ -33,7 +31,7 @@ public class GroupMigrateRecovery implements ConfigMigration
 	}
 
 	@Override
-	public void apply(ConfigManager configManager)
+	public void apply(ConfigManager configManager, Gson gson)
 	{
 		String oldPointsJson = configManager.getConfiguration(CameraPointsConfig.CONFIG_GROUP, "points");
 		if (oldPointsJson != null && !oldPointsJson.isEmpty())

@@ -1,5 +1,6 @@
 package com.camerapoints.migrations;
 
+import com.google.gson.Gson;
 import net.runelite.client.config.ConfigManager;
 
 public interface ConfigMigration
@@ -8,5 +9,5 @@ public interface ConfigMigration
 
 	String toVersion();
 
-	void apply(ConfigManager configManager);
+	void apply(ConfigManager configManager, Gson gson);
 }
