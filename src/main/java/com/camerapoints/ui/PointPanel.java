@@ -153,6 +153,10 @@ public class PointPanel extends JPanel
 					requestFocusInWindow();
 					return;
 				}
+				if (Helper.isModifierKey(e.getKeyCode()))
+				{
+					return;
+				}
 				Keybind hotkey = new Keybind(e);
 				keybindButton.setText(hotkey.toString());
 				cameraPoint.setKeybind(hotkey);
