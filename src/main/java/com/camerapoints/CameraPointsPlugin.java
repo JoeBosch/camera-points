@@ -128,8 +128,11 @@ public class CameraPointsPlugin extends Plugin
 	public void setCamera(CameraPoint cameraPoint)
 	{
 		clientThread.invoke(() -> {
-			CameraPoint.Direction direction = cameraPoint.getDirection() == null ? CameraPoint.Direction.NORTH : cameraPoint.getDirection();
-			client.runScript(SCRIPTID_COMPASS_ANGLE, direction.getScriptValue());
+			var direction = cameraPoint.getDirection() == null ? CameraPoint.Direction.NONE : cameraPoint.getDirection();
+			if (direction != CameraPoint.Direction.NONE)
+			{
+				client.runScript(SCRIPTID_COMPASS_ANGLE, direction.getScriptValue());
+			}
 			if (cameraPoint.isApplyZoom())
 			{
 				client.runScript(ScriptID.CAMERA_DO_ZOOM, cameraPoint.getZoom(), cameraPoint.getZoom());
