@@ -28,7 +28,7 @@ dependencies {
 }
 
 group = 'com.camerapoints'
-version = '3.0.0'
+version = '3.0.1'
 
 tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8'
@@ -70,6 +70,6 @@ tasks.register('shadowJar', Jar) {
 
     group = BasePlugin.BUILD_GROUP
     archiveClassifier.set('shadow')
-    archiveFileName.set("camera-points-3.0.0-all.jar")
+    archiveFileName.set("camera-points-3.0.1-all.jar")
 }
 

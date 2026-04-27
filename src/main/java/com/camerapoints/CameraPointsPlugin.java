@@ -2,6 +2,7 @@ package com.camerapoints;
 
 import com.camerapoints.models.CameraPoint;
 import com.camerapoints.models.CameraPointGroup;
+import com.camerapoints.migrations.ConfigMigrationRunner;
 import com.camerapoints.ui.CameraPointsPluginPanel;
 import com.google.gson.Gson;
 import com.google.inject.Provides;
@@ -30,7 +31,7 @@ import java.util.List;
 )
 public class CameraPointsPlugin extends Plugin
 {
-	public static final String CURRENT_VERISON = "3.0.0";
+	public static final String CURRENT_VERSION = "3.0.1";
 	public static final int SCRIPTID_CAM_FORCE_ANGLE = 143;
 	public static final int SCRIPTID_COMPASS_ANGLE = 1050;
 
@@ -168,11 +169,8 @@ public class CameraPointsPlugin extends Plugin
 
 	public void loadConfig()
 	{
-		String version = configManager.getConfiguration(CameraPointsConfig.CONFIG_GROUP, "version");
-		if (!CURRENT_VERISON.equals(version))
-		{
-			return;
-		}
+		new ConfigMigrationRunner(configManager, CURRENT_VERSION).runMigrations();
+
 		String groupsJson = configManager.getConfiguration(CameraPointsConfig.CONFIG_GROUP, "groups");
 		CameraPointGroup[] groups = gson.fromJson(groupsJson, CameraPointGroup[].class);
 		List<CameraPointGroup> groupList = groups == null ? java.util.Collections.emptyList() : Arrays.asList(groups);
@@ -181,7 +179,7 @@ public class CameraPointsPlugin extends Plugin
 
 	public void updateConfig()
 	{
-		configManager.setConfiguration(CameraPointsConfig.CONFIG_GROUP, "version", CURRENT_VERISON);
+		configManager.setConfiguration(CameraPointsConfig.CONFIG_GROUP, "version", CURRENT_VERSION);
 		configManager.setConfiguration(CameraPointsConfig.CONFIG_GROUP, "groups", gson.toJson(cameraPointGroupManager.getAllGroups()));
 	}
 
