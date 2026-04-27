@@ -17,7 +17,9 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -34,6 +36,9 @@ import java.awt.event.MouseEvent;
 
 public class PointPanel extends JPanel
 {
+	private static final int ZOOM_LIMIT_MIN = -272;
+	private static final int ZOOM_LIMIT_MAX = 1400;
+
 	private final CameraPointsPlugin plugin;
 	private final CameraPointGroup group;
 	private final CameraPoint cameraPoint;
@@ -58,6 +63,7 @@ public class PointPanel extends JPanel
 	private final JToggleButton applyZoomButton = new JToggleButton();
 	private final JLabel updateZoomLabel = new JLabel(fromGameIcon);
 	private final JLabel deleteLabel = new JLabel(deleteIcon);
+	private final JSpinner zoomSpinner = new JSpinner(new SpinnerNumberModel(ZOOM_LIMIT_MIN, ZOOM_LIMIT_MIN, ZOOM_LIMIT_MAX, 1));
 
 	public PointPanel(CameraPointsPlugin plugin, CameraPointGroup group, CameraPoint cameraPoint, Runnable reloadFunction)
 	{
@@ -315,7 +321,22 @@ public class PointPanel extends JPanel
 		bottomControlsRow.add(updateZoomLabel);
 		bottomControlsRow.add(deleteLabel);
 
+		zoomSpinner.setToolTipText("Zoom value");
+		zoomSpinner.setValue(cameraPoint.getZoom());
+		zoomSpinner.setEnabled(cameraPoint.isApplyZoom());
+		zoomSpinner.addChangeListener(e ->
+		{
+			cameraPoint.setZoom((int)zoomSpinner.getValue());
+			plugin.updateConfig();
+		});
+
+
+		JPanel centerRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+		centerRow.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		centerRow.add(zoomSpinner);
+
 		bottomPanel.add(topMetaRow, BorderLayout.NORTH);
+		bottomPanel.add(centerRow, BorderLayout.CENTER);
 		bottomPanel.add(bottomControlsRow, BorderLayout.SOUTH);
 
 		add(namePanel, BorderLayout.NORTH);
